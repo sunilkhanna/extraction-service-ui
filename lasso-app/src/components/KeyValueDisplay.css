@@ -1,0 +1,31 @@
+.kv-container {
+  margin-top: 1rem;
+  text-align: left;
+  padding: 1rem;
+}
+
+.kv-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #ccc;
+}
+
+.kv-table th,
+.kv-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.kv-table th {
+  background-color: #f0f0f0;
+}
+
+.key-cell {
+  color: green;
+  font-weight: bold;
+}
+
+.value-cell {
+  color: red;
+}
