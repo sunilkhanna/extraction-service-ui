@@ -4,8 +4,6 @@ import Toolbar from "./Toolbar";
 import SaveKeyValueButton from "./SaveKeyValueButton";
 import KeyValueDisplay from "./KeyValueDisplay";
 import "./../App.css";
-import { runBatch, validateBatch } from '../api/batchService';
-
 
 export default function CanvasContainer() {
   const [image, setImage] = useState(null);
@@ -17,9 +15,8 @@ export default function CanvasContainer() {
   const [flatKeyValueArray, setFlatKeyValueArray] = useState([]);
   const [folders, setFolders] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(null);
+
   const [openFolders, setOpenFolders] = useState({});
-  const [selectedFilePath, setSelectedFilePath] = useState(null);
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/list-processed")
@@ -30,11 +27,9 @@ export default function CanvasContainer() {
 
   const handleThumbnailClick = async (imagePath, folderName) => {
     try {
-
       setFlatKeyValueArray([]);
       setDrawerOpen(false);
       const encodedPath = encodeURIComponent(imagePath);
-      console.log('Clicked image file ',encodedPath)
       const res = await fetch(`http://127.0.0.1:8000/processed/${encodedPath}`);
       const blob = await res.blob();
 
@@ -52,12 +47,8 @@ export default function CanvasContainer() {
       const data = await predictRes.json();
       setRectangles(data.region || []);
       setDocumentType(data.document_type || "");
+
       setFlatKeyValueArray(Array.isArray(data.results) ? data.results : []);
-
-      console.log(folder,"--",file);
-      setSelectedFilePath({ folder, file });
-
-
     } catch (err) {
       console.error("Error loading or predicting:", err);
       alert("Prediction failed");
@@ -244,132 +235,53 @@ export default function CanvasContainer() {
             fontSize: "12px",
          }}
        >
-        {folders.map((folder) => {
-          const isOpen = openFolders[folder.folder] || false;
+         {folders.map((folder) => {
+           const isOpen = openFolders[folder.folder] || false;
 
-
-          return (
-            <div key={folder.folder} style={{ marginBottom: "10px", position: "relative" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  color: "#333",
-                  fontSize: "12px",
-                }}
-              >
-                <span
-                  onClick={() =>
-                    setOpenFolders((prev) => ({
-                      ...prev,
-                      [folder.folder]: !prev[folder.folder],
-                    }))
-                  }
-                >
-                  {isOpen ? "📂" : "📁"} {folder.folder}
-                </span>
-                <div style={{ position: "relative" }}>
-                  <button
-                    onClick={() => setMenuOpen((prev) => (prev === folder.folder ? null : folder.folder))}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "0 5px",
-                      fontSize: "16px",
-                    }}
-                  >
-                    ⋯
-                  </button>
-                  {menuOpen === folder.folder && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "20px",
-                        right: 0,
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                        zIndex: 1000,
-                        fontSize: "12px",
-                      }}
-                    >
-
-                      <div
-                        onClick={() => {
-                          setMenuOpen(null);
-                          runBatch(folder.folder); // 👈 call API instead of alert
-                        }}
-
+           return (
+             <div key={folder.folder} style={{ marginBottom: "10px" }}>
+               <div
+                 onClick={() =>
+                   setOpenFolders((prev) => ({
+                     ...prev,
+                     [folder.folder]: !prev[folder.folder],
+                   }))
+                 }
+                 style={{
+                   cursor: "pointer",
+                   fontWeight: "bold",
+                   color: "#333",
+                   marginBottom: "4px",
+                    fontSize: "12px",
+                 }}
+               >
+                 {isOpen ? "📂" : "📁"} {folder.folder}
+               </div>
+               {isOpen && (
+                 <ul style={{ paddingLeft: "20px", listStyle: "none" }}>
+                   {folder.files.map((file) => (
+                     <li key={file}>
+                       <button
+                         onClick={() => handleThumbnailClick(file, folder.folder)}
                          style={{
-                           padding: "6px 12px",
+                           background: "none",
+                           border: "none",
+                           color: "#007BFF",
                            cursor: "pointer",
-                           fontSize: "10px",
-                           whiteSpace: "nowrap", // Ensures content doesn't wrap
-                           display: "flex",      // Optional: helps with alignment
-                           alignItems: "center", // Optional: vertical alignment
+                           padding: 0,
+                           textAlign: "left",
+                            fontSize: "12px",
                          }}
                        >
-                         ▶️ Run Batch
-
-                      </div>
-
-                    {/*   <div
-                        onClick={() => {
-                          if (!selectedFilePath) {
-                            alert("Please select a file to validate");
-                            return;
-                          }
-
-                          const [folder, file] = selectedFilePath.split("/");
-                          setMenuOpen(null);
-                          validateBatch(folder, file);
-                        }}
-                        style={{ padding: "6px 12px", cursor: "pointer" }}
-                      >
-                        ✅ Validate Batch
-                      </div>
- */}
-
-
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {isOpen && (
-                <ul style={{ paddingLeft: "20px", listStyle: "none" }}>
-                  {folder.files.map((file) => (
-                    <li key={file}>
-                      <button
-                        onClick={() => handleThumbnailClick(file, folder.folder)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#007BFF",
-                          cursor: "pointer",
-                          padding: 0,
-                          textAlign: "left",
-                          fontSize: "12px",
-                        }}
-                      >
-                        📄 {file.split("/").pop()}
-                      </button>
-
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          );
-        })}
-
-
-
+                         📄 {file.split("/").pop()}
+                       </button>
+                     </li>
+                   ))}
+                 </ul>
+               )}
+             </div>
+           );
+         })}
        </div>
 
 
@@ -394,11 +306,6 @@ export default function CanvasContainer() {
               selectedIdx={selectedIdx}
               setSelectedIdx={setSelectedIdx}
               mode={mode}
-              selectedFilePath={selectedFilePath}
-              setSelectedFilePath={setSelectedFilePath}
-              documentType={documentType}
-              setDocumentType={setDocumentType}
-
             />
           )}
         </div>
